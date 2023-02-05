@@ -1,0 +1,72 @@
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QPushButton, QVBoxLayout, QWidget
+from chatterbot import ChatBot
+from chatterbot.trainers import ChatterBotCorpusTrainer
+
+class ChatWindow(QMainWindow):
+    def __init__(self, chatbot):
+        super().__init__()
+
+        # Create a chatbot instance
+        self.chatbot = chatbot
+
+        # Set up the main window
+        self.setWindowTitle("ChatGPT")
+        self.setGeometry(100, 100, 400, 500)
+
+        # Create the text edit widget for displaying the conversation
+        self.conversation = QTextEdit(self)
+        self.conversation.setReadOnly(True)
+
+        # Create the text edit widget for entering new messages
+        self.message = QTextEdit(self)
+
+        # Create the send button
+        self.send_button = QPushButton("Send", self)
+        self.send_button.clicked.connect(self.send_message)
+
+        # Set up the layout
+        layout = QVBoxLayout()
+        layout.addWidget(self.conversation)
+        layout.addWidget(self.message)
+        layout.addWidget(self.send_button)
+
+        # Create the central widget and set its layout
+        central_widget = QWidget(self)
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
+
+    def send_message(self):
+        # Get the user's message
+        request = self.message.toPlainText()
+
+        # Clear the message widget
+        self.message.clear()
+
+        # Add the user's message to the conversation widget
+        self.conversation.append("You: " + request)
+
+        # Get a response from the chatbot
+        response = self.chatbot.get_response(request)
+
+        # Add the chatbot's response to the conversation widget
+        self.conversation.append("ChatGPT: " + str(response))
+
+if __name__ == "__main__":
+    # Create a chatbot instance
+    chatbot = ChatBot(name="ChatGPT", read_only=True, logic_adapters=["chatterbot.logic.BestMatch"])
+
+    # Train the chatbot using a corpus of English language data
+    trainer = ChatterBotCorpusTrainer(chatbot)
+    trainer.train("chatterbot.corpus.english.greetings",
+                  "chatterbot.corpus.english.conversations")
+
+    # Create a PyQt5 application
+    app = QApplication(sys.argv)
+
+    # Create the chat window
+    window = ChatWindow(chatbot)
+    window.show()
+
+    # Run the application
+    sys.exit(app.exec_())
